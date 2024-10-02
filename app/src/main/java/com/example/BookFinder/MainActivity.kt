@@ -9,6 +9,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 
@@ -19,15 +22,19 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Map
@@ -40,11 +47,14 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -60,6 +70,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -69,6 +80,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import androidx.compose.ui.text.googlefonts.Font
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.BookFinder.ui.theme.BookFinderTheme
 import kotlinx.coroutines.launch
 
@@ -78,14 +93,20 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
+            val navController = rememberNavController()
+
             BookFinderTheme {
-                app()
+                NavHost(navController = navController, startDestination = "mainScreen") {
+                    composable("mainScreen") { app(navController) } // Pass navController to app
+                    composable("searchScreen") { SearchScreen(navController) } // Use searchScreen for search tab
+                }
             }
         }
     }
-
 }
 
+
+// these are the navItem, the navItem class is a class to display the bottomBar icons
 sealed class navItem(
     val icon: ImageVector,
     val label: String,
@@ -102,15 +123,20 @@ sealed class navItem(
 @SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun app() {
+private fun app(navController: NavHostController) {
+
+
+
+
+
     val navItems = listOf(
         navItem.main,
         navItem.map,
         navItem.favorites,
         navItem.community
 
-        )
-    
+    )
+
     var selectedItem by remember {
         mutableStateOf(navItems.first())
     }
@@ -127,7 +153,7 @@ private fun app() {
             navigationIconContentColor = Color.White,
             actionIconContentColor = Color.White,
 
-        ),
+            ),
             navigationIcon = {
                 Row(){
                     Spacer(modifier = Modifier.width(4.dp))
@@ -151,7 +177,11 @@ private fun app() {
             },
             actions = {
 
-                Icon(Icons.Default.Search, contentDescription = "",modifier = Modifier.size(28.dp))
+                IconButton(onClick = {
+                    navController.navigate("searchScreen")
+                }) {
+                    Icon(Icons.Default.Search, contentDescription = "", modifier = Modifier.size(28.dp))
+                }
                 Spacer(modifier = Modifier.width(4.dp))
 
 
@@ -176,7 +206,7 @@ private fun app() {
                             Icon(
                                 item.icon,
                                 contentDescription = "",
-                                tint = if (item == selectedItem) item.color else Color(0xFFB0BEC5),
+                                tint = if (item == selectedItem) item.color else Color.White,
                                 modifier = Modifier.size(28.dp)
                             )
                         },
@@ -191,13 +221,13 @@ private fun app() {
 
     ) { innerPadding ->
         HorizontalPager(state = pagerState, Modifier.padding(innerPadding)) {
-        page ->
+                page ->
             val item = navItems[page]
 
             when(item){
                 navItem.main -> {
                     selectedItem = navItems[pagerState.currentPage]
-                    MainScreen()
+                    MainScreen(navController)
                 }
                 navItem.map -> {
                     selectedItem = navItems[pagerState.currentPage]
@@ -217,28 +247,25 @@ private fun app() {
         }
     }
 }
-@Composable
-fun cardMeme(@DrawableRes drawable: Int){ Image(
-    painter = painterResource(drawable),
-    contentDescription = null,
-    contentScale = ContentScale.Crop,
-    modifier = Modifier
-        .size(88.dp)
-        .clip(CircleShape)
-)
-}
 
 // do not include this
 @Composable
-fun MainScreen(modifier: Modifier = Modifier,) {
-    Box(modifier.fillMaxSize()) {
-        Text(
-            "Main Screen",
-            modifier = Modifier.align(Alignment.Center),
-            style = TextStyle.Default.copy(fontSize = 32.sp)
-        )
+fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) {
+    Column(
+        modifier
+            .fillMaxSize()
+            .padding(30.dp)
+            .verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+        SearchBar(navController, false)
+
     }
-}
+
+
+
+
+
+    }
+
 
 
 @Composable
@@ -272,6 +299,81 @@ fun CommunityScreen(modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchScreen(navController: NavHostController) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Search") },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) { // Navigate back when clicked
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF1E88E5),
+                    titleContentColor = Color.White
+                )
+            )
+        }
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(it)
+                .padding(16.dp)
+        ) {
+            SearchBar(navController, true)
+        }
+    }
+}
+@Composable
+fun SearchBar(navController: NavHostController,state: Boolean,
+    modifier: Modifier = Modifier
+) {
+    var text by remember { mutableStateOf("") }
+
+    TextField(
+
+        value = text,
+        onValueChange = { text = it},
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = null
+            )
+        },
+        colors = TextFieldDefaults.colors(
+            focusedTextColor = Color.Black,
+            unfocusedContainerColor = Color.White,
+            focusedContainerColor = Color.White
+        ),
+        placeholder = {
+            Text(stringResource(R.string.place_Holder_Search_Bar))
+        },
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { navController.navigate("searchScreen") },
+        enabled = state
+
+    )
+}
+@Composable
+fun cardMeme(@DrawableRes drawable: Int){ Image(
+    painter = painterResource(drawable),
+    contentDescription = null,
+    contentScale = ContentScale.Crop,
+    modifier = Modifier
+        .size(88.dp)
+        .clip(CircleShape)
+)
+}
+
+
 // this is for test
 @Composable
 
@@ -298,5 +400,5 @@ fun cardWithName(name: String, modifier: Modifier = Modifier) {
 @Preview
 @Composable
 private fun appPreview() {
-    app()
+
 }
