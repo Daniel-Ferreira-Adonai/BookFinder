@@ -1,7 +1,7 @@
 package com.example.BookFinder
 
 import android.annotation.SuppressLint
-import android.media.Image
+
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -78,7 +78,9 @@ import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.ui.text.googlefonts.Font
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -97,8 +99,8 @@ class MainActivity : ComponentActivity() {
 
             BookFinderTheme {
                 NavHost(navController = navController, startDestination = "mainScreen") {
-                    composable("mainScreen") { app(navController) } // Pass navController to app
-                    composable("searchScreen") { SearchScreen(navController) } // Use searchScreen for search tab
+                    composable("mainScreen") { app(navController) }
+                    composable("searchScreen") { SearchScreen(navController) }
                 }
             }
         }
@@ -255,8 +257,15 @@ fun MainScreen(navController: NavHostController, modifier: Modifier = Modifier) 
         modifier
             .fillMaxSize()
             .padding(30.dp)
-            .verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            .verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         SearchBar(navController, false)
+
+
+
+        Text("Last books")
+        BookCard()
+        BookCard()
+
 
     }
 
@@ -301,19 +310,28 @@ fun CommunityScreen(modifier: Modifier = Modifier) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchScreen(navController: NavHostController) {
+fun SearchScreen(navController: NavHostController, modifier: Modifier = Modifier) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Search") },
+                title = {
+
+                    SearchBar(navController, true)
+                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) { // Navigate back when clicked
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back"
-                        )
+                    Row(modifier = Modifier.width(30.dp)){
+                        IconButton(onClick = { navController.navigateUp() }) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back"
+                                ,modifier.size(22.dp)
+                            )
+                        }
                     }
+
+                    
                 },
+                
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color(0xFF1E88E5),
                     titleContentColor = Color.White
@@ -327,41 +345,56 @@ fun SearchScreen(navController: NavHostController) {
                 .padding(it)
                 .padding(16.dp)
         ) {
-            SearchBar(navController, true)
+
         }
     }
 }
 @Composable
-fun SearchBar(navController: NavHostController,state: Boolean,
-    modifier: Modifier = Modifier
-) {
+
+fun SearchBar(navController: NavHostController, state: Boolean, modifier: Modifier = Modifier) {
     var text by remember { mutableStateOf("") }
 
-    TextField(
-
-        value = text,
-        onValueChange = { text = it},
-        leadingIcon = {
+    val leadingIcon: @Composable (() -> Unit)? = if (!state) {
+        {
             Icon(
                 imageVector = Icons.Default.Search,
-                contentDescription = null
+                contentDescription = null,
+                modifier = Modifier.size(20.dp)
             )
-        },
+        }
+    } else {
+        null
+    }
+
+    TextField(
+        value = text,
+        onValueChange = { text = it },
+        leadingIcon = leadingIcon,
         colors = TextFieldDefaults.colors(
-            focusedTextColor = Color.Black,
-            unfocusedContainerColor = Color.White,
-            focusedContainerColor = Color.White
+            focusedTextColor = Color.White,
+            unfocusedContainerColor = Color(0xFF1E88E5),
+            focusedContainerColor = Color(0xFF1E88E5),
+            unfocusedLeadingIconColor = Color.White,
+            focusedLeadingIconColor = Color.White,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent
         ),
         placeholder = {
-            Text(stringResource(R.string.place_Holder_Search_Bar))
+            Text(
+                stringResource(R.string.place_Holder_Search_Bar),
+                style = TextStyle(fontSize = 14.sp)
+            )
         },
+        textStyle = TextStyle(fontSize = 14.sp),
         modifier = modifier
             .fillMaxWidth()
+            .height(48.dp)
             .clickable { navController.navigate("searchScreen") },
-        enabled = state
-
+        enabled = state,
+        singleLine = true
     )
 }
+
 @Composable
 fun cardMeme(@DrawableRes drawable: Int){ Image(
     painter = painterResource(drawable),
@@ -396,9 +429,94 @@ fun cardWithName(name: String, modifier: Modifier = Modifier) {
     }
 }
 // this is for test
+@Composable
+fun BookCard() {
+    var likes by remember {
+        mutableStateOf(120)
+    }
+    var isLiked by remember {
+        mutableStateOf(true)
+    }
+    Card(
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 6.dp)
+            .clip(RoundedCornerShape(8.dp))
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(60.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(Color.LightGray),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.harrypp),
+                    contentDescription = "Harry Potter",
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .size(60.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "Harry Potter",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+                Text(
+                    "J.K. Rowling",
+                    style = MaterialTheme.typography.bodySmall.copy(color = Color.Gray),
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    imageVector = if (isLiked) Icons.Default.Favorite else Icons.Outlined.FavoriteBorder,
+                    contentDescription = "Favorites",
+                    tint = Color.Red,
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clickable {isLiked = !isLiked
+                            if(isLiked) likes += 1 else likes -= 1}
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = likes.toString(),
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp)
+                )
+            }
+        }
+    }
+}
+
+
+
+@Preview
+@Composable
+private fun BookCardprev() {
+    BookCard()
+}
 
 @Preview
 @Composable
 private fun appPreview() {
+
 
 }
